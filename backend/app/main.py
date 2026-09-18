@@ -52,6 +52,16 @@ app.include_router(virality.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
 app.include_router(brand_kit.router, prefix="/api")
 
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "service": "Marketing Studio AI API",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/api/health"
+    }
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
