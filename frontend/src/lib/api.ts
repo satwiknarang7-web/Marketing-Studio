@@ -8,6 +8,7 @@ import type {
   VoiceoverAttachParams,
   VoiceoverAttachResponse,
   VoicePreset,
+  StudioAsset,
   CatalogueVoice,
   PhotoshootGenerateResponse,
   PhotoshootMode,
@@ -74,6 +75,27 @@ export const api = {
       method: "POST",
       body: JSON.stringify(params),
     }),
+
+  // Assets available to drop into a template
+  getAssets: (limit = 60) =>
+    fetchApi<StudioAsset[]>(`/assets/images?limit=${limit}`, { method: "GET" }),
+
+  uploadAsset: async (file: File): Promise<StudioAsset> => {
+    const form = new FormData()
+    form.append("file", file)
+    // No Content-Type header: the browser must set the multipart boundary.
+    const response = await fetch(`${API_BASE}/assets/upload`, { method: "POST", body: form })
+    if (!response.ok) {
+      let message = "Upload failed"
+      try {
+        message = (await response.json()).detail || message
+      } catch {
+        message = `HTTP ${response.status}: ${response.statusText}`
+      }
+      throw new Error(message)
+    }
+    return response.json()
+  },
 
   // Voiceover
   getVoicePresets: () => fetchApi<VoicePreset[]>("/audio/presets", { method: "GET" }),

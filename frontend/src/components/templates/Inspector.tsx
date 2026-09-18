@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AssetPicker } from "./AssetPicker"
 
 const FONTS: { id: FontToken; label: string }[] = [
   { id: "display", label: "Display (Archivo Black)" },
@@ -235,16 +236,27 @@ export function Inspector({
 
       {layer.type === "image" && (
         <div className="space-y-3 pt-2 border-t border-border/40">
-          <Row label="Image URL (leave empty for placeholder)">
-            <Input
-              value={layer.url ?? ""}
-              placeholder="Paste a generated image URL"
-              onChange={(e) =>
-                set({ url: e.target.value, source: e.target.value ? "url" : "placeholder" })
-              }
-              className="h-8 text-xs"
+          <Row label="Picture">
+            <AssetPicker
+              currentUrl={layer.url}
+              onPick={(url, w, h) => {
+                // Match the layer box to the picture's aspect ratio, keeping its
+                // current width, so a portrait shot does not arrive squashed.
+                const patch: Partial<Layer> = { url, source: "url" }
+                if (w && h) patch.h = Math.round(layer.w * (h / w))
+                set(patch)
+              }}
             />
           </Row>
+          {layer.url && (
+            <button
+              type="button"
+              onClick={() => set({ url: undefined, source: "placeholder" })}
+              className="text-[11px] text-muted-foreground hover:text-destructive underline"
+            >
+              Clear picture
+            </button>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <Row label="Fit">
               <Select value={layer.fit ?? "cover"} onValueChange={(fit) => set({ fit: fit as "cover" | "contain" })}>

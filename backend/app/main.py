@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from app.models.database import engine, Base
 from app.config import settings
 
-from app.routers import text, image, video, history, brand_kit, photoshoot, audio
+from app.routers import text, image, video, history, brand_kit, photoshoot, audio, assets
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,16 +25,22 @@ async def lifespan(app: FastAPI):
     os.makedirs("data/images", exist_ok=True)
     os.makedirs("data/videos", exist_ok=True)
     os.makedirs("data/audio", exist_ok=True)
+    os.makedirs("data/uploads", exist_ok=True)
     
     yield
     # Shutdown
 
 app = FastAPI(title="Segue IT Marketing Studio API", lifespan=lifespan)
 
+# allow_credentials must stay False while origins may include "*": the browser
+# rejects `Access-Control-Allow-Origin: *` together with credentials, which
+# breaks any cross-origin request that actually enforces CORS - including the
+# crossOrigin="anonymous" images the template editor rasterizes on export.
+# Nothing here is authenticated, so credentials are not needed.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.get_cors_origins(),
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -49,6 +55,7 @@ app.include_router(image.router, prefix="/api")
 app.include_router(video.router, prefix="/api")
 app.include_router(photoshoot.router, prefix="/api")
 app.include_router(audio.router, prefix="/api")
+app.include_router(assets.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
 app.include_router(brand_kit.router, prefix="/api")
 

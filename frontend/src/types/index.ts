@@ -108,6 +108,16 @@ export interface VoiceoverAttachResponse {
   fit: string;
 }
 
+export interface StudioAsset {
+  url: string;
+  filename: string;
+  source: "generated" | "upload";
+  bytes: number;
+  width: number | null;
+  height: number | null;
+  created_at: string;
+}
+
 export interface PhotoshootMode {
   id: string;
   name: string;
