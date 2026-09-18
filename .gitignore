@@ -19,9 +19,10 @@ build/
 .env.local
 .env.*.local
 
-# Database
+# Database & Media Cache
 *.db
 backend/data/
+data/
 
 # IDE
 .vscode/
