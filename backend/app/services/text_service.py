@@ -3,12 +3,16 @@ from huggingface_hub import InferenceClient
 from app.config import settings
 from app.prompts.templates import TEMPLATES
 
-# Use featherless-ai router provider for Qwen models on modern HF router
-client = (
-    InferenceClient(provider="featherless-ai", token=settings.HF_TOKEN)
-    if settings.HF_TOKEN
-    else None
-)
+# Use featherless-ai router provider for Qwen models on modern HF router, with fallback
+try:
+    client = (
+        InferenceClient(provider="featherless-ai", token=settings.HF_TOKEN)
+        if settings.HF_TOKEN
+        else None
+    )
+except TypeError:
+    client = InferenceClient(token=settings.HF_TOKEN) if settings.HF_TOKEN else None
+
 fallback_client = InferenceClient(token=settings.HF_TOKEN) if settings.HF_TOKEN else None
 
 
