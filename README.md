@@ -1,17 +1,17 @@
-# Segue IT Marketing Studio (Higgsfield AI Creative Suite)
+# Segue IT Marketing Studio
 
-A 100% free, open-source generative AI marketing and creative studio built with the **Higgsfield AI** architecture, styled with a sleek obsidian and electric blue aesthetic. Generate commercial product photoshoots across 10 specialized modes, produce motion video ads with director camera controls, and create high-converting marketing copy — all on free, open models.
+A 100% free, open-source generative AI marketing and creative studio for the Segue IT marketing team, running entirely on free, open models. Generate commercial product photoshoots across 10 specialized modes, produce motion video ads with director camera controls, and create high-converting marketing copy — all on free, open models.
 
 ---
 
 ## ✨ Features & Studios
 
 - **Explore & Model Showcase** — Top widescreen showcase carousel with looping video previews, quick model launcher, and real-time status indicators.
-- **Product Photoshoot Studio (`/product-photoshoot`)** — 10 commercial advertising photoshoot modes based on `higgsfield-ai/skills` with product reference image upload and dual-engine backend (`@higgsfield/cli` + FLUX.1 hybrid fallback).
+- **Product Photoshoot Studio (`/product-photoshoot`)** — 10 commercial advertising photoshoot modes with product reference image upload, powered by FLUX.1.
 - **Stitch (`/stitch`)** — Build a timeline from generated clips and join them into one longer video with hard cuts or crossfades, then narrate the whole cut.
 - **Video Studio (`/video-studio`)** — Director camera controls (Pan, Tilt, Zoom, Orbit 360°, Crane, FPV Drone, Static) that drive the rendered camera path, optical focal lengths (24mm, 35mm, 50mm, 85mm), aspect ratios (16:9, 9:16, 1:1, 4:5), and looping video feed.
 - **Cinema Studio (`/cinema`)** — Virtual camera bodies (ARRI Alexa 35, RED V-Raptor, Sony Venice 2), cinema lenses, f-stop depth of field, and stacked dynamic motion paths.
-- **Higgsfield Genjutsu (`/genjutsu`)** — Video-to-Video metamorphosis, camera reframe, world morph, and cinematic style transfer.
+- **Restyle (`/genjutsu`)** — Video-to-Video metamorphosis, camera reframe, world morph, and cinematic style transfer.
 - **Image Studio (`/image-studio`)** — 4K commercial visuals powered by FLUX.1-schnell and Nano Banana Pro presets.
 - **ChatGPT Plugin Studio (`/chatgpt-plugin`)** — In-conversation prompt runner with mobile UGC preview.
 - **Voiceover Studio (`/audio`)** — Neural text-to-speech across 47 free English voices (322 total incl. other languages). Pick a delivery preset or any specific voice, adjust speed, and download an MP3. Voiceovers can be attached to any generated clip from Video Studio.
@@ -69,7 +69,7 @@ intermittently returns an empty stream.
 | Layer | Technology |
 |:------|:-----------|
 | **Frontend** | Next.js 16 (Turbopack), React 19, TypeScript, Tailwind CSS v4, shadcn/ui, Framer Motion |
-| **Backend** | FastAPI, Python 3.11+, SQLAlchemy (async), SQLite, `@higgsfield/cli` v1.1.25 |
+| **Backend** | FastAPI, Python 3.11+, SQLAlchemy (async), SQLite, ffmpeg |
 | **Video Engine** | Lightricks LTX-Video Distilled (via Hugging Face Gradio Client), with keyframe-motion fallback |
 | **Image Engine** | Black Forest Labs FLUX.1-schnell |
 | **Text Engine** | Qwen 2.5 7B Instruct |

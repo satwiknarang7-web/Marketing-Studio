@@ -16,10 +16,10 @@ import { api } from "@/lib/api"
 import { toast } from "sonner"
 import type { ImageGenerateResponse } from "@/types"
 
-const HIGGSFIELD_IMAGE_MODELS = [
+const IMAGE_MODELS = [
   { id: "flux", name: "FLUX.1 Schnell", badge: "4K", desc: "Ultra-crisp commercial photorealism and typography" },
   { id: "nano-banana", name: "Nano Banana Pro", badge: "FAST", desc: "Speed generation with high prompt adherence" },
-  { id: "soul", name: "Soul 2.0 Photoreal", badge: "PEOPLE", desc: "Higgsfield specialized model for people & apparel" },
+  { id: "soul", name: "Soul 2.0 Photoreal", badge: "PEOPLE", desc: "Specialised model for people & apparel" },
 ]
 
 export default function ImageStudioPage() {
@@ -40,7 +40,7 @@ export default function ImageStudioPage() {
 
     setIsLoading(true)
     try {
-      const modelTag = HIGGSFIELD_IMAGE_MODELS.find((m) => m.id === selectedModel)?.name || ""
+      const modelTag = IMAGE_MODELS.find((m) => m.id === selectedModel)?.name || ""
       const enrichedPrompt = `${prompt.trim()}, ${style.toLowerCase()} commercial aesthetic, shot on 35mm lens`
 
       const res = await api.generateImage({
@@ -51,7 +51,7 @@ export default function ImageStudioPage() {
         style: style.toLowerCase().replace(/ /g, "_"),
       })
       setResult(res)
-      toast.success("Image generated successfully with FLUX/Higgsfield engine!")
+      toast.success("Image generated successfully with FLUX/studio engine!")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to generate image")
     } finally {
@@ -101,7 +101,7 @@ export default function ImageStudioPage() {
               Image Model Architecture
             </Label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {HIGGSFIELD_IMAGE_MODELS.map((m) => {
+              {IMAGE_MODELS.map((m) => {
                 const isSelected = selectedModel === m.id
                 return (
                   <button

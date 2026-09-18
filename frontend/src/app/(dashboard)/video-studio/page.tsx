@@ -88,7 +88,7 @@ const SHOWCASE_VIDEOS = [
     id: "showcase-2",
     title: "Endless Visions — Multi-Camera Movement",
     prompt: "Split perspective dynamic camera movement tracking subject with smooth lighting shifts",
-    model: "Higgsfield Genjutsu",
+    model: "Restyle",
     videoUrl: "/videos/genjutsu-camera.mp4",
     aspect: "16:9",
   },
@@ -608,7 +608,7 @@ export default function VideoStudioPage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground text-center">
-                    Higgsfield Genjutsu Camera Movement Demo
+                    Camera movement demo
                   </p>
                 </div>
               )}

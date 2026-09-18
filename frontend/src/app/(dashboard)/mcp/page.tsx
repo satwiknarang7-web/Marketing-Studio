@@ -14,7 +14,7 @@ const MCP_CONFIG = {
       command: "npx",
       args: ["-y", "@higgsfield/cli", "mcp"],
       env: {
-        HIGGSFIELD_API_URL: "http://localhost:8000/api",
+        STUDIO_API_URL: "http://localhost:8000/api",
       },
     },
   },
@@ -50,7 +50,7 @@ export default function MCPPage() {
             </Badge>
           </div>
           <h1 className="text-3xl font-black tracking-tight text-foreground">
-            Higgsfield MCP Server
+            Segue IT MCP Server
           </h1>
           <p className="text-sm text-muted-foreground max-w-2xl">
             Allow Claude Code, Cursor, Antigravity, and AI agents to invoke the video models and photoshoot modes autonomously.

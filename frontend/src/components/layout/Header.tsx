@@ -17,7 +17,7 @@ export function Header() {
         </h1>
         <Badge variant="outline" className="hidden sm:inline-flex items-center gap-1.5 py-0.5 px-2 text-[11px] border-blue-500/30 bg-blue-500/10 text-blue-400">
           <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-          Higgsfield Dual Pipeline
+          Dual model pipeline
         </Badge>
       </div>
 

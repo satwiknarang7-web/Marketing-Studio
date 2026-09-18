@@ -76,7 +76,7 @@ export default function ApiDocsPage() {
             </Badge>
           </div>
           <h1 className="text-3xl font-black tracking-tight text-foreground">
-            Higgsfield Developer API
+            Segue IT Developer API
           </h1>
           <p className="text-sm text-muted-foreground max-w-2xl">
             Integrate video synthesis and 10-mode commercial product photoshoots directly into your custom applications and workflows.

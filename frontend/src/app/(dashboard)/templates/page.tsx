@@ -227,7 +227,7 @@ export default function TemplatesPage() {
             </div>
           </div>
 
-          <div className="flex justify-center rounded-xl border border-border/60 bg-[#0b0e14] p-5 overflow-auto">
+          <div className="flex justify-center rounded-xl border border-border/60 studio-surface-sunken p-5 overflow-auto">
             <EditorCanvas
               template={template}
               displayWidth={CANVAS_DISPLAY_WIDTH}

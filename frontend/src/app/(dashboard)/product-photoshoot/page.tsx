@@ -79,7 +79,7 @@ export default function ProductPhotoshootPage() {
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight">Product Photoshoot</h1>
             <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              Higgsfield Architecture
+              Studio Architecture
             </Badge>
           </div>
           <p className="text-muted-foreground mt-1">
@@ -105,7 +105,7 @@ export default function ProductPhotoshootPage() {
               engine === "higgsfield" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Higgsfield CLI
+            Studio CLI
           </button>
           <button
             type="button"

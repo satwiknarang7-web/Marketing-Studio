@@ -50,7 +50,7 @@ export default function ChatGPTPluginPage() {
             </Badge>
           </div>
           <h1 className="text-3xl font-black tracking-tight text-foreground">
-            Higgsfield in ChatGPT
+            Studio in ChatGPT
           </h1>
           <p className="text-sm text-muted-foreground max-w-xl">
             Directly invoke 70+ video, photoshoot, and image generation models inside your ChatGPT conversations with zero setup friction.
@@ -80,7 +80,7 @@ export default function ChatGPTPluginPage() {
             <CardHeader className="p-4 pb-2 border-b border-border/40">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-blue-400" />
-                Try Higgsfield ChatGPT Prompt
+                Try ChatGPT Prompt
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
@@ -89,7 +89,7 @@ export default function ChatGPTPluginPage() {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   className="min-h-[100px] text-sm bg-muted/20"
-                  placeholder="Ask ChatGPT with Higgsfield plugin..."
+                  placeholder="Ask ChatGPT with studio plugin..."
                 />
               </div>
 
@@ -104,7 +104,7 @@ export default function ChatGPTPluginPage() {
               {response && (
                 <div className="p-3.5 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-2">
                   <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider block">
-                    ChatGPT Output via Higgsfield Engine
+                    ChatGPT Output via Studio Engine
                   </span>
                   <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
                     {response}
@@ -129,7 +129,7 @@ export default function ChatGPTPluginPage() {
             <div className="absolute top-3 left-3 right-3 bg-black/70 backdrop-blur-sm p-2 rounded-lg border border-white/20">
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
-                ⚡ Higgsfield UGC Generator
+                ⚡ UGC Generator
               </div>
               <p className="text-[9px] text-zinc-300 truncate mt-0.5">Prompt: Organic matcha tea promo</p>
             </div>

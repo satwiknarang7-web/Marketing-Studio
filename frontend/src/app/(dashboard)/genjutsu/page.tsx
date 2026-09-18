@@ -48,7 +48,7 @@ export default function GenjutsuPage() {
     setIsLoading(true)
     try {
       const transformLabel = GENJUTSU_TRANSFORMS.find((t) => t.id === selectedTransform)?.label || ""
-      const fullPrompt = `Higgsfield Genjutsu transformation: ${transformLabel}, ${prompt || "cinematic style metamorphosis"}`
+      const fullPrompt = `Restyle transformation: ${transformLabel}, ${prompt || "cinematic style metamorphosis"}`
 
       const res = await api.generateVideo({
         prompt: fullPrompt,
@@ -76,7 +76,7 @@ export default function GenjutsuPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-5">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-extrabold tracking-tight">Higgsfield Genjutsu</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">Restyle</h1>
             <Badge className="bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono text-xs">
               Video-to-Video Engine
             </Badge>
