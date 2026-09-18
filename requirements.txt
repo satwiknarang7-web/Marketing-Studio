@@ -3,6 +3,7 @@ uvicorn[standard]==0.30.0
 huggingface-hub>=0.28.0
 sqlalchemy==2.0.35
 aiosqlite==0.20.0
+greenlet>=3.0.0
 python-dotenv==1.0.1
 pillow==10.4.0
 python-multipart==0.0.9
