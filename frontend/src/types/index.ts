@@ -21,7 +21,7 @@ export interface GenerateVideoParams {
   duration_seconds: number;
   style: string;
   image_data?: string;
-  engine?: "auto" | "higgsfield" | "huggingface";
+  camera_movement?: string;
 }
 
 export interface PhotoshootGenerateParams {
@@ -31,12 +31,6 @@ export interface PhotoshootGenerateParams {
   aspect_ratio: string;
   count: number;
   engine?: "auto" | "higgsfield" | "huggingface";
-}
-
-export interface ViralityScoreParams {
-  video_url: string;
-  title?: string;
-  target_platform?: string;
 }
 
 // ============== API Responses ==============
@@ -59,6 +53,8 @@ export interface VideoGenerateResponse {
   id: string;
   video_url: string;
   model_used: string;
+  /** "ltx-video" = real AI diffusion, "keyframe-motion" = stills + camera move */
+  engine_used: "ltx-video" | "keyframe-motion";
   created_at: string;
 }
 
@@ -68,19 +64,6 @@ export interface PhotoshootGenerateResponse {
   mode: string;
   enhanced_prompt: string;
   engine_used: string;
-  created_at: string;
-}
-
-export interface ViralityScoreResponse {
-  id: string;
-  virality_score: number;
-  hook_score: number;
-  retention_score: number;
-  engagement_potential: string;
-  strengths: string[];
-  weaknesses: string[];
-  recommendations: string[];
-  platform_breakdown: Record<string, number>;
   created_at: string;
 }
 

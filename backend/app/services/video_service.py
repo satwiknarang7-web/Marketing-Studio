@@ -25,6 +25,38 @@ NEGATIVE_PROMPT = (
 )
 
 
+CAMERA_MOVEMENTS = {
+    "static", "pan_left", "pan_right", "tilt_up", "tilt_down",
+    "zoom_in", "zoom_out", "orbit_360", "crane_up", "fpv_drone",
+}
+
+# Cinema Studio camera stacks mapped onto the motion paths we can actually render.
+CAMERA_ALIASES = {
+    "dolly_zoom": "zoom_in",
+    "whip_pan": "pan_right",
+    "crane_tilt": "crane_up",
+    "tracking_orbit": "orbit_360",
+    "fpv_dive": "fpv_drone",
+    "camera_reframe": "orbit_360",
+}
+
+
+def _resolve_camera_movement(camera_movement: str | None) -> str:
+    """Normalise a UI camera id to one of CAMERA_MOVEMENTS.
+
+    Accepts ids ("pan_left"), labels ("Pan Left") and Cinema stack ids
+    ("tracking_orbit"). Unknown values fall back to a gentle push in.
+    """
+    if not camera_movement:
+        return "zoom_in"
+    key = camera_movement.strip().lower().replace(" ", "_").replace("-", "_")
+    if key in CAMERA_MOVEMENTS:
+        return key
+    if key in CAMERA_ALIASES:
+        return CAMERA_ALIASES[key]
+    return "zoom_in"
+
+
 def _clean_and_enrich_prompt(prompt: str, style: str) -> str:
     """Enriches short or ambiguous prompts to ensure the actual subject is depicted accurately."""
     p_lower = prompt.lower()
@@ -185,7 +217,7 @@ def _synthesize_progressive_motion_video(
     )
     writer.send(None)
 
-    mov = camera_movement.lower()
+    mov = _resolve_camera_movement(camera_movement)
 
     for i in range(total_frames):
         global_t = i / float(total_frames)
@@ -206,29 +238,34 @@ def _synthesize_progressive_motion_video(
         work_w, work_h = int(width * margin), int(height * margin)
         expanded = base_frame.resize((work_w, work_h), Image.Resampling.BILINEAR)
 
-        if "orbit" in mov or "drone" in mov or "fpv" in mov:
+        if mov in ("orbit_360", "fpv_drone"):
             angle = ease_cam * math.pi * 0.6
             dx = int((work_w - width) * (0.5 + 0.38 * math.sin(angle)))
             dy = int((work_h - height) * (0.5 + 0.28 * math.cos(angle)))
             scale = 1.04 + 0.08 * math.sin(ease_cam * math.pi)
-        elif "pan_left" in mov:
+        elif mov == "pan_left":
             dx = int((work_w - width) * (1.0 - ease_cam))
             dy = (work_h - height) // 2
             scale = 1.05
-        elif "pan_right" in mov:
+        elif mov == "pan_right":
             dx = int((work_w - width) * ease_cam)
             dy = (work_h - height) // 2
             scale = 1.05
-        elif "tilt_up" in mov:
+        elif mov in ("tilt_up", "crane_up"):
             dx = (work_w - width) // 2
             dy = int((work_h - height) * (1.0 - ease_cam))
             scale = 1.05
-        elif "tilt_down" in mov:
+        elif mov == "tilt_down":
             dx = (work_w - width) // 2
             dy = int((work_h - height) * ease_cam)
             scale = 1.05
-        elif "zoom_out" in mov or "pull" in mov:
+        elif mov == "zoom_out":
             scale = 1.15 - 0.12 * ease_cam
+            dx = (work_w - width) // 2
+            dy = (work_h - height) // 2
+        elif mov == "static":
+            # Locked-off tripod: keyframes still morph, the camera does not move.
+            scale = 1.0
             dx = (work_w - width) // 2
             dy = (work_h - height) // 2
         else:
@@ -256,8 +293,14 @@ async def generate_video(
     duration_seconds: int,
     style: str,
     image_data: str | None = None,
-) -> str:
-    """Generate a genuine AI video clip using LTX-Video with Multi-Stage Generative Motion Engine fallback."""
+    camera_movement: str = "zoom_in",
+) -> tuple[str, str]:
+    """Generate a video clip and report which engine actually produced it.
+
+    Returns (video_url, engine_used) where engine_used is one of:
+      "ltx-video"      - real AI diffusion video from the LTX-Video model
+      "keyframe-motion" - fallback: generated stills crossfaded with a camera move
+    """
     full_prompt = _clean_and_enrich_prompt(prompt, style.lower().replace(" ", "_"))
 
     filename = f"{uuid.uuid4()}.mp4"
@@ -283,7 +326,7 @@ async def generate_video(
         )
         if temp_video_path and os.path.exists(temp_video_path):
             shutil.copyfile(temp_video_path, filepath)
-            return f"/data/videos/{filename}"
+            return f"/data/videos/{filename}", "ltx-video"
     except Exception as e:
         logger.warning(
             f"LTX-Video space unavailable ({e}). Engaging Progressive Generative Motion Engine..."
@@ -323,13 +366,13 @@ async def generate_video(
             _synthesize_progressive_motion_video,
             keyframe_paths,
             filepath,
-            prompt,
+            camera_movement,
             max(3, min(duration_seconds, 6)),
             24,
         )
 
         if os.path.exists(filepath) and os.path.getsize(filepath) > 1000:
-            return f"/data/videos/{filename}"
+            return f"/data/videos/{filename}", "keyframe-motion"
 
     except Exception as fallback_err:
         logger.error(f"Generative motion engine failed: {fallback_err}")

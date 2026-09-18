@@ -55,9 +55,14 @@ export default function GenjutsuPage() {
         duration_seconds: 5,
         style: "cinematic",
         image_data: inputImage || undefined,
+        camera_movement: selectedTransform,
       })
       setResult(res)
-      toast.success("Genjutsu vision synthesized!")
+      toast.success(
+        res.engine_used === "ltx-video"
+          ? "Transformation generated with LTX-Video."
+          : "LTX-Video was unavailable — built from generated keyframes with a camera move."
+      )
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to synthesize vision")
     } finally {

@@ -9,7 +9,6 @@ import {
   Upload,
   Image as ImageIcon,
   X,
-  TrendingUp,
   SlidersHorizontal,
   Film,
   Camera,
@@ -25,18 +24,24 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PromptInput } from "@/components/shared/PromptInput"
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay"
-import { ViralityModal } from "@/components/shared/ViralityModal"
 import { VIDEO_STYLES } from "@/lib/constants"
 import { api, BACKEND_URL } from "@/lib/api"
 import { toast } from "sonner"
-import type { VideoGenerateResponse, ViralityScoreResponse } from "@/types"
+import type { VideoGenerateResponse } from "@/types"
 
-const HIGGSFIELD_MODELS = [
-  { id: "seedance", name: "Seedance 2.5", badge: "TOP", desc: "Higgsfield flagship video generation engine" },
-  { id: "ltx-video", name: "LTX-Video Distilled", badge: "FAST", desc: "Real-time 480p/720p motion distillation" },
-  { id: "kling", name: "Kling 1.5 HD", badge: "PRO", desc: "High-fidelity motion and photorealistic human movement" },
-  { id: "hailuo", name: "Minimax Hailuo", badge: "CINEMA", desc: "Cinematic lighting and fluid physics" },
-  { id: "veo", name: "Veo 2", badge: "4K", desc: "Long-context high definition visual storytelling" },
+const VIDEO_MODELS = [
+  {
+    id: "ltx-video",
+    name: "LTX-Video Distilled",
+    badge: "FREE",
+    desc: "Lightricks real-time motion distillation — the engine actually wired up",
+    available: true,
+  },
+  // Not connected yet. Listed so the gap is visible rather than implied.
+  { id: "seedance", name: "Seedance 2.5", badge: "SOON", desc: "Not connected", available: false },
+  { id: "kling", name: "Kling 1.5 HD", badge: "SOON", desc: "Not connected", available: false },
+  { id: "hailuo", name: "Minimax Hailuo", badge: "SOON", desc: "Not connected", available: false },
+  { id: "veo", name: "Veo 2", badge: "SOON", desc: "Not connected", available: false },
 ]
 
 const CAMERA_MOVEMENTS = [
@@ -111,7 +116,7 @@ const SHOWCASE_VIDEOS = [
 ]
 
 export default function VideoStudioPage() {
-  const [selectedModel, setSelectedModel] = useState("seedance")
+  const [selectedModel, setSelectedModel] = useState("ltx-video")
   const [mode, setMode] = useState<"text" | "image" | "genjutsu">("text")
   const [cameraMotion, setCameraMotion] = useState("zoom_in")
   const [lens, setLens] = useState("35mm")
@@ -122,12 +127,6 @@ export default function VideoStudioPage() {
   const [inputImage, setInputImage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<VideoGenerateResponse | null>(null)
-
-  // Virality Predictor state
-  const [isViralityOpen, setIsViralityOpen] = useState(false)
-  const [isViralityLoading, setIsViralityLoading] = useState(false)
-  const [viralityData, setViralityData] = useState<ViralityScoreResponse | null>(null)
-  const [targetVideoForScore, setTargetVideoForScore] = useState<{ url: string; title: string } | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -164,32 +163,18 @@ export default function VideoStudioPage() {
         duration_seconds: parseInt(duration.replace("s", "")),
         style: style.toLowerCase().replace(/ & /g, "_").replace(/ /g, "_"),
         image_data: inputImage || undefined,
-        engine: "auto",
+        camera_movement: cameraMotion,
       })
       setResult(res)
-      toast.success("Video generated successfully with Higgsfield engine!")
+      toast.success(
+        res.engine_used === "ltx-video"
+          ? "Video generated with LTX-Video."
+          : "LTX-Video was unavailable — built from generated keyframes with a camera move instead."
+      )
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to generate video")
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const handleScoreVirality = async (videoUrl: string, title: string) => {
-    setIsViralityOpen(true)
-    setIsViralityLoading(true)
-    setTargetVideoForScore({ url: videoUrl, title })
-    try {
-      const res = await api.scoreVirality({
-        video_url: videoUrl,
-        title,
-      })
-      setViralityData(res)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to score virality")
-      setIsViralityOpen(false)
-    } finally {
-      setIsViralityLoading(false)
     }
   }
 
@@ -208,7 +193,7 @@ export default function VideoStudioPage() {
             </Badge>
           </div>
           <p className="text-muted-foreground mt-1 text-sm">
-            Create high-framerate commercial video ads, camera motion paths, and predictive virality scores.
+            Create commercial video ads with real camera motion paths, driven by free open models.
           </p>
         </div>
 
@@ -262,15 +247,18 @@ export default function VideoStudioPage() {
               Video Model Engine
             </Label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {HIGGSFIELD_MODELS.map((m) => {
+              {VIDEO_MODELS.map((m) => {
                 const isSelected = selectedModel === m.id
                 return (
                   <button
                     key={m.id}
                     type="button"
+                    disabled={!m.available}
                     onClick={() => setSelectedModel(m.id)}
                     className={`p-3 rounded-xl border text-left transition-all ${
-                      isSelected
+                      !m.available
+                        ? "border-border/40 bg-card/20 opacity-40 cursor-not-allowed"
+                        : isSelected
                         ? "border-blue-600 bg-blue-500/10 shadow-sm"
                         : "border-border/60 hover:border-border bg-card/60"
                     }`}
@@ -406,8 +394,8 @@ export default function VideoStudioPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="3s" className="text-xs">3 Seconds</SelectItem>
                       <SelectItem value="5s" className="text-xs">5 Seconds</SelectItem>
-                      <SelectItem value="10s" className="text-xs">10 Seconds (Extended)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -450,13 +438,16 @@ export default function VideoStudioPage() {
                 </CardDescription>
               </div>
               {result && (
-                <Button
-                  size="sm"
-                  onClick={() => handleScoreVirality(`${BACKEND_URL}${result.video_url}`, prompt || "Commercial Ad")}
-                  className="bg-blue-600/10 text-blue-400 border border-blue-500/30 hover:bg-blue-600/20 text-xs h-7 gap-1"
+                <Badge
+                  variant="outline"
+                  className={
+                    result.engine_used === "ltx-video"
+                      ? "border-blue-500/30 text-blue-400 text-[10px]"
+                      : "border-amber-500/30 text-amber-400 text-[10px]"
+                  }
                 >
-                  <TrendingUp className="h-3.5 w-3.5" /> Score Virality
-                </Button>
+                  {result.engine_used === "ltx-video" ? "AI video" : "Keyframe motion"}
+                </Badge>
               )}
             </CardHeader>
 
@@ -482,6 +473,11 @@ export default function VideoStudioPage() {
                       <RefreshCw className="h-3.5 w-3.5" />
                     </Button>
                   </div>
+                  <p className="text-[11px] text-muted-foreground text-center">
+                    {result.engine_used === "ltx-video"
+                      ? "Generated by LTX-Video diffusion."
+                      : "LTX-Video was unavailable. This clip is generated stills crossfaded with a camera move — not AI-generated motion."}
+                  </p>
                 </div>
               ) : (
                 <div className="w-full space-y-3">
@@ -561,14 +557,6 @@ export default function VideoStudioPage() {
                 </div>
 
                 <div className="flex items-center gap-2 pt-1 border-t border-border/40">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleScoreVirality(v.videoUrl, v.title)}
-                    className="h-7 text-xs px-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1"
-                  >
-                    <TrendingUp className="h-3.5 w-3.5" /> Score Virality
-                  </Button>
                   <Button asChild size="sm" variant="ghost" className="h-7 text-xs px-2 ml-auto">
                     <a href={v.videoUrl} download target="_blank" rel="noreferrer">
                       <Download className="h-3.5 w-3.5" />
@@ -581,13 +569,6 @@ export default function VideoStudioPage() {
         </div>
       </div>
 
-      {/* Virality Modal */}
-      <ViralityModal
-        isOpen={isViralityOpen}
-        onClose={() => setIsViralityOpen(false)}
-        data={viralityData}
-        isLoading={isViralityLoading}
-      />
     </div>
   )
 }

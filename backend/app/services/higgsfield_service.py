@@ -2,12 +2,8 @@ import asyncio
 import subprocess
 import json
 import logging
-import os
-import uuid
-from typing import Dict, Any, List, Tuple
-from app.config import settings
+from typing import Dict, List, Tuple
 from app.services.image_service import generate_image
-from app.services.text_service import generate_text
 
 logger = logging.getLogger(__name__)
 
@@ -155,77 +151,3 @@ async def execute_photoshoot(
         images.append(f"data:image/png;base64,{img_b64}")
 
     return images, enhanced_prompt, "hybrid-flux-engine"
-
-
-async def analyze_virality(video_url: str, title: str | None = None, platform: str = "tiktok_reels") -> Dict[str, Any]:
-    """Higgsfield Virality Predictor: Analyzes marketing videos for hook strength,
-
-    audience retention, emotional triggers, and virality scoring.
-    """
-    system_prompt = (
-        "You are the Higgsfield Virality Predictor AI, an elite marketing performance analyst.\n"
-        f"Analyze this marketing video (URL: {video_url}, Context: {title or 'Marketing Ad Clip'}, Platform: {platform}).\n"
-        "Return ONLY a valid JSON object matching this exact schema:\n"
-        "{\n"
-        '  "virality_score": 88,\n'
-        '  "hook_score": 92,\n'
-        '  "retention_score": 84,\n'
-        '  "engagement_potential": "Viral Outlier",\n'
-        '  "strengths": ["Strong initial motion in first 1.5s", "Clear high-contrast focal subject", "High visual punch"],\n'
-        '  "weaknesses": ["Pacing slows around 2.5s mark", "Call to action could appear sooner"],\n'
-        '  "recommendations": ["Add punchy on-screen text hook in the first frame", "Increase transition velocity at the midpoint", "Include audio beat sync"],\n'
-        '  "platform_breakdown": {\n'
-        '    "TikTok": 89,\n'
-        '    "Instagram_Reels": 92,\n'
-        '    "LinkedIn_Video": 74,\n'
-        '    "YouTube_Shorts": 86\n'
-        "  }\n"
-        "}"
-    )
-
-    try:
-        # Call Qwen text generation
-        results = await generate_text(
-            template="social_media_linkedin",
-            prompt=system_prompt,
-            tone="professional",
-            length="medium",
-            variations_count=1,
-        )
-        raw_text = results[0] if results else ""
-        # Extract JSON from response
-        start_idx = raw_text.find("{")
-        end_idx = raw_text.rfind("}")
-        if start_idx != -1 and end_idx != -1:
-            parsed = json.loads(raw_text[start_idx : end_idx + 1])
-            return parsed
-    except Exception as e:
-        logger.warning(f"Failed to parse LLM virality analysis: {e}")
-
-    # Robust default virality scoring
-    return {
-        "virality_score": 85,
-        "hook_score": 88,
-        "retention_score": 82,
-        "engagement_potential": "High",
-        "strengths": [
-            "Dynamic motion grabs viewer focus within first 1.5 seconds",
-            "High contrast subject draws immediate attention on mobile feed",
-            "Smooth camera trajectory keeps eyes engaged",
-        ],
-        "weaknesses": [
-            "Lacks an explicit text hook in first frame to stop fast scrollers",
-            "Pacing could be accelerated by 15% for TikTok audiences",
-        ],
-        "recommendations": [
-            "Add bold question or bold stat as first-frame caption",
-            "Pair with upbeat trending audio track to maximize reach",
-            "Position primary brand logo in top-left safe zone",
-        ],
-        "platform_breakdown": {
-            "TikTok": 86,
-            "Instagram_Reels": 91,
-            "YouTube_Shorts": 84,
-            "LinkedIn_Video": 78,
-        },
-    }

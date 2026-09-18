@@ -5,8 +5,6 @@ import type {
   PhotoshootGenerateParams,
   PhotoshootGenerateResponse,
   PhotoshootMode,
-  ViralityScoreParams,
-  ViralityScoreResponse,
   TextGenerateResponse,
   ImageGenerateResponse,
   VideoGenerateResponse,
@@ -67,13 +65,6 @@ export const api = {
 
   generatePhotoshoot: (params: PhotoshootGenerateParams) =>
     fetchApi<PhotoshootGenerateResponse>("/photoshoot/generate", {
-      method: "POST",
-      body: JSON.stringify(params),
-    }),
-
-  // Higgsfield Virality Predictor
-  scoreVirality: (params: ViralityScoreParams) =>
-    fetchApi<ViralityScoreResponse>("/virality/score", {
       method: "POST",
       body: JSON.stringify(params),
     }),

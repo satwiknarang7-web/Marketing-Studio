@@ -38,18 +38,6 @@ const ENDPOINTS = [
   },
   {
     method: "POST",
-    path: "/api/virality/score",
-    title: "Predictive Virality Predictor",
-    desc: "Analyzes hook retention, platform fit, and drop-off risks for marketing videos.",
-    snippet: `curl -X POST "http://localhost:8000/api/virality/score" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "video_url": "/data/videos/sample.mp4",
-    "title": "DTC Product Launch Hook"
-  }'`,
-  },
-  {
-    method: "POST",
     path: "/api/image/generate",
     title: "Generate Image (FLUX.1 Schnell)",
     desc: "Creates 4K photorealistic marketing imagery with custom aspect ratios.",
@@ -91,7 +79,7 @@ export default function ApiDocsPage() {
             Higgsfield Developer API
           </h1>
           <p className="text-sm text-muted-foreground max-w-2xl">
-            Integrate video synthesis, 10-mode commercial product photoshoots, and AI virality analytics directly into your custom applications and workflows.
+            Integrate video synthesis and 10-mode commercial product photoshoots directly into your custom applications and workflows.
           </p>
         </div>
       </div>

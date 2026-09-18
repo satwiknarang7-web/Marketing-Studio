@@ -33,11 +33,13 @@ class VideoGenerateRequest(BaseModel):
     duration_seconds: int = 3
     style: str = "cinematic"
     image_data: Optional[str] = None
+    camera_movement: str = "zoom_in"
 
 class VideoGenerateResponse(BaseModel):
     id: str
     video_url: str
     model_used: str
+    engine_used: str  # 'ltx-video' (AI diffusion) or 'keyframe-motion' (still-frame slideshow)
     created_at: datetime
 
 class PhotoshootGenerateRequest(BaseModel):
@@ -54,23 +56,6 @@ class PhotoshootGenerateResponse(BaseModel):
     mode: str
     enhanced_prompt: str
     engine_used: str
-    created_at: datetime
-
-class ViralityScoreRequest(BaseModel):
-    video_url: str
-    title: Optional[str] = None
-    target_platform: Optional[str] = "tiktok_reels"
-
-class ViralityScoreResponse(BaseModel):
-    id: str
-    virality_score: int  # 0 - 100
-    hook_score: int      # 0 - 100
-    retention_score: int # 0 - 100
-    engagement_potential: str  # 'High', 'Moderate', 'Viral Outlier'
-    strengths: List[str]
-    weaknesses: List[str]
-    recommendations: List[str]
-    platform_breakdown: dict
     created_at: datetime
 
 class HistoryItem(BaseModel):

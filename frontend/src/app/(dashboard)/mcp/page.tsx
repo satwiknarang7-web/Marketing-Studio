@@ -23,7 +23,6 @@ const MCP_CONFIG = {
 const MCP_TOOLS = [
   { name: "photoshoot_generate", desc: "10 commercial product camera modes with lighting and multi-aspect framing" },
   { name: "video_generate", desc: "Cinema camera path motion synthesis and prompt enrichment" },
-  { name: "virality_predict", desc: "Hook retention (0-3s) and viral drop-off risk analytics" },
   { name: "image_generate", desc: "FLUX.1-schnell 4K photorealistic marketing imagery" },
 ]
 
@@ -54,7 +53,7 @@ export default function MCPPage() {
             Higgsfield MCP Server
           </h1>
           <p className="text-sm text-muted-foreground max-w-2xl">
-            Allow Claude Code, Cursor, Antigravity, and AI agents to invoke Higgsfield video models, photoshoot modes, and virality scoring autonomously.
+            Allow Claude Code, Cursor, Antigravity, and AI agents to invoke the video models and photoshoot modes autonomously.
           </p>
         </div>
       </div>

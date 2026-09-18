@@ -60,9 +60,14 @@ export default function CinemaStudioPage() {
         prompt: cinematicPrompt,
         duration_seconds: 5,
         style: "cinematic",
+        camera_movement: cameraStack,
       })
       setResult(res)
-      toast.success("Cinema sequence synthesized successfully!")
+      toast.success(
+        res.engine_used === "ltx-video"
+          ? "Cinema sequence generated with LTX-Video."
+          : "LTX-Video was unavailable — sequence built from generated keyframes with a camera move."
+      )
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to generate sequence")
     } finally {

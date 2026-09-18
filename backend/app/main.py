@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from app.models.database import engine, Base
 from app.config import settings
 
-from app.routers import text, image, video, history, brand_kit, photoshoot, virality
+from app.routers import text, image, video, history, brand_kit, photoshoot
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,7 +39,6 @@ app.add_middleware(
 )
 
 # Serve static files
-import os
 os.makedirs("data", exist_ok=True)
 app.mount("/data", StaticFiles(directory="data"), name="data")
 
@@ -48,7 +47,6 @@ app.include_router(text.router, prefix="/api")
 app.include_router(image.router, prefix="/api")
 app.include_router(video.router, prefix="/api")
 app.include_router(photoshoot.router, prefix="/api")
-app.include_router(virality.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
 app.include_router(brand_kit.router, prefix="/api")
 
