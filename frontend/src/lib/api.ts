@@ -3,6 +3,12 @@ import type {
   GenerateImageParams,
   GenerateVideoParams,
   PhotoshootGenerateParams,
+  VoiceoverGenerateParams,
+  VoiceoverGenerateResponse,
+  VoiceoverAttachParams,
+  VoiceoverAttachResponse,
+  VoicePreset,
+  CatalogueVoice,
   PhotoshootGenerateResponse,
   PhotoshootMode,
   TextGenerateResponse,
@@ -65,6 +71,26 @@ export const api = {
 
   generatePhotoshoot: (params: PhotoshootGenerateParams) =>
     fetchApi<PhotoshootGenerateResponse>("/photoshoot/generate", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+
+  // Voiceover
+  getVoicePresets: () => fetchApi<VoicePreset[]>("/audio/presets", { method: "GET" }),
+
+  getVoiceCatalogue: (locale = "en-") =>
+    fetchApi<CatalogueVoice[]>(`/audio/voices?locale=${encodeURIComponent(locale)}`, {
+      method: "GET",
+    }),
+
+  generateVoiceover: (params: VoiceoverGenerateParams) =>
+    fetchApi<VoiceoverGenerateResponse>("/audio/tts", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+
+  attachVoiceover: (params: VoiceoverAttachParams) =>
+    fetchApi<VoiceoverAttachResponse>("/audio/attach", {
       method: "POST",
       body: JSON.stringify(params),
     }),

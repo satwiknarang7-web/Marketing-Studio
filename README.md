@@ -13,7 +13,7 @@ A 100% free, open-source generative AI marketing and creative studio built with 
 - **Higgsfield Genjutsu (`/genjutsu`)** — Video-to-Video metamorphosis, camera reframe, world morph, and cinematic style transfer.
 - **Image Studio (`/image-studio`)** — 4K commercial visuals powered by FLUX.1-schnell and Nano Banana Pro presets.
 - **ChatGPT Plugin Studio (`/chatgpt-plugin`)** — In-conversation prompt runner with mobile UGC preview.
-- **Audio & Voice Studio (`/audio`)** — Script read-aloud preview using your computer's built-in speech synthesis. No AI model and no exported audio file; use it to check pacing before recording.
+- **Voiceover Studio (`/audio`)** — Neural text-to-speech across 47 free English voices (322 total incl. other languages). Pick a delivery preset or any specific voice, adjust speed, and download an MP3. Voiceovers can be attached to any generated clip from Video Studio.
 - **Developer API & MCP (`/api-docs` & `/mcp`)** — Direct REST API documentation and pre-configured Model Context Protocol server for AI agent pairing.
 - **Assets Vault (`/history`)** — Unified management for past videos, photoshoots, images, and marketing copy.
 
@@ -34,7 +34,32 @@ engine that actually ran, and the player shows a badge plus a one-line explanati
 present a Tier 2 clip as model-generated video.
 
 **Known limits:** clips cap at ~5s (LTX) / ~6s (fallback); FPV Drone and Orbit 360° currently
-share one motion path; there is no audio track on generated video yet.
+share one motion path.
+
+---
+
+## 🎙️ Voiceover
+
+Speech is generated with **edge-tts** — free, no API key, no GPU, and no per-user quota,
+which is why it is the default rather than a Hugging Face Space. 322 neural voices, 47 of
+them English.
+
+Generate an MP3 in Voiceover Studio, or add one directly to a clip from Video Studio's
+**Add voiceover** panel. Two fit modes, neither of which discards content:
+
+| Fit | Behaviour |
+|:----|:----------|
+| **Hold last frame** (default) | Voiceover longer than the clip → freeze the final frame until the script finishes. Clip longer → keep every frame, audio simply ends early. |
+| **Trim to shortest** | Cut at whichever track ends first. |
+
+Audio is muxed with the `ffmpeg` binary already bundled via `imageio-ffmpeg`, so there is
+nothing extra to install. Synthesis retries up to 3 times, because the upstream service
+intermittently returns an empty stream.
+
+> **Worth knowing:** edge-tts speaks to Microsoft Edge's Read Aloud endpoint, which is not a
+> documented public API. It is free and unlimited today, but it is a third-party dependency
+> outside our control. For a fully self-hosted alternative, `kokoro` (~350MB model, needs
+> torch) runs entirely offline and can be dropped in behind the same service interface.
 
 ---
 
@@ -47,6 +72,7 @@ share one motion path; there is no audio track on generated video yet.
 | **Video Engine** | Lightricks LTX-Video Distilled (via Hugging Face Gradio Client), with keyframe-motion fallback |
 | **Image Engine** | Black Forest Labs FLUX.1-schnell |
 | **Text Engine** | Qwen 2.5 7B Instruct |
+| **Voice Engine** | edge-tts (Microsoft neural voices, 322 voices, free) |
 
 ---
 

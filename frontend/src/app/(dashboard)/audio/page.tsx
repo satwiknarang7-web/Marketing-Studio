@@ -1,109 +1,108 @@
 "use client"
 
 import * as React from "react"
-import { useState } from "react"
-import { Volume2, Play, Square, Download, Sparkles, Mic, Music, Waves, Check } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Volume2, Download, Sparkles, Mic, Loader2, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { api, BACKEND_URL } from "@/lib/api"
 import { toast } from "sonner"
+import type { VoicePreset, CatalogueVoice, VoiceoverGenerateResponse } from "@/types"
 
-const VOICES = [
-  { id: "narrator_deep", name: "Deep Narrator", tone: "Lower-pitched, slower delivery", pitch: 0.8, rate: 0.9, prefer: "male" },
-  { id: "brand_friendly", name: "Friendly Brand Voice", tone: "Neutral pitch, conversational pace", pitch: 1.0, rate: 1.0, prefer: "female" },
-  { id: "ad_energetic", name: "High-Energy Ad Read", tone: "Higher pitch, faster delivery", pitch: 1.15, rate: 1.2, prefer: "male" },
-  { id: "calm_luxury", name: "Calm & Measured", tone: "Soft pitch, slow elegant pace", pitch: 0.95, rate: 0.85, prefer: "female" },
+const SPEEDS = [
+  { value: "-15%", label: "Slow" },
+  { value: "-8%", label: "Relaxed" },
+  { value: "default", label: "Preset default" },
+  { value: "+10%", label: "Brisk" },
+  { value: "+20%", label: "Fast" },
 ]
 
-const FEMALE_HINTS = ["female", "samantha", "zira", "hazel", "susan", "karen", "fiona", "moira"]
-const MALE_HINTS = ["male", "david", "alex", "daniel", "george", "mark", "fred"]
-
 export default function AudioStudioPage() {
-  const [selectedVoice, setSelectedVoice] = useState("brand_friendly")
-  const [script, setScript] = useState("Welcome to Segue IT Marketing Studio. Elevate your brand with generative commercial media, designed for viral conversion.")
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [speechRate, setSpeechRate] = useState("1.0")
+  const [presets, setPresets] = useState<VoicePreset[]>([])
+  const [catalogue, setCatalogue] = useState<CatalogueVoice[]>([])
+  const [selectedPreset, setSelectedPreset] = useState("brand_friendly")
+  const [overrideVoice, setOverrideVoice] = useState("preset")
+  const [rate, setRate] = useState("default")
+  const [script, setScript] = useState(
+    "Introducing Segue IT Marketing Studio. Create commercial video, product photography and campaign copy in minutes, not weeks."
+  )
+  const [isLoading, setIsLoading] = useState(false)
+  const [result, setResult] = useState<VoiceoverGenerateResponse | null>(null)
 
-  const handleSpeak = () => {
-    if (!script.trim()) return toast.error("Please enter a voice script")
+  useEffect(() => {
+    api.getVoicePresets().then(setPresets).catch(() => toast.error("Could not load voice presets"))
+    // The full catalogue is a nicety; the presets work without it.
+    api.getVoiceCatalogue("en-").then(setCatalogue).catch(() => undefined)
+  }, [])
 
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel()
+  const handleGenerate = async () => {
+    if (!script.trim()) return toast.error("Please enter a script")
 
-      const utterance = new SpeechSynthesisUtterance(script)
-      const preset = VOICES.find((v) => v.id === selectedVoice)
-      utterance.pitch = preset?.pitch ?? 1.0
-      utterance.rate = parseFloat(speechRate) * (preset?.rate ?? 1.0)
-
-      // Match against the system voice list. Falls back to the default voice
-      // when the machine has no matching one installed.
-      const voices = window.speechSynthesis.getVoices()
-      if (voices.length > 0 && preset) {
-        const hints = preset.prefer === "female" ? FEMALE_HINTS : MALE_HINTS
-        const match = voices.find((v) =>
-          hints.some((h) => v.name.toLowerCase().includes(h))
-        )
-        if (match) utterance.voice = match
-      }
-
-      utterance.onstart = () => setIsPlaying(true)
-      utterance.onend = () => setIsPlaying(false)
-      utterance.onerror = () => setIsPlaying(false)
-
-      window.speechSynthesis.speak(utterance)
-      toast.success("Synthesizing voice audio...")
-    } else {
-      toast.error("Browser speech synthesis not supported")
+    setIsLoading(true)
+    setResult(null)
+    try {
+      const res = await api.generateVoiceover({
+        script,
+        preset_id: selectedPreset,
+        voice: overrideVoice === "preset" ? undefined : overrideVoice,
+        rate: rate === "default" ? undefined : rate,
+      })
+      setResult(res)
+      toast.success(
+        res.duration_seconds
+          ? `Voiceover ready — ${res.duration_seconds.toFixed(1)}s`
+          : "Voiceover ready"
+      )
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Voice synthesis failed")
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleStop = () => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel()
-      setIsPlaying(false)
-    }
-  }
+  const wordCount = script.trim() ? script.trim().split(/\s+/).length : 0
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-5">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-extrabold tracking-tight">Audio &amp; Voice Studio</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">Voiceover Studio</h1>
             <Badge className="bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono text-xs">
-              System Text-to-Speech
+              Neural TTS
             </Badge>
             <Badge variant="outline" className="border-blue-500/30 text-blue-400 text-xs">
-              100% Free
+              Free &amp; Unlimited
             </Badge>
           </div>
           <p className="text-muted-foreground mt-1 text-sm">
-            Preview voiceover scripts using your computer&apos;s built-in speech synthesis. No AI model
-            involved and no audio file is produced — this reads a script aloud so you can hear the pacing
-            before recording it properly.
+            Generate a downloadable MP3 voiceover from a script, then attach it to any clip in Video Studio.
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Voice Controls (7 cols) */}
+        {/* Controls */}
         <div className="md:col-span-7 space-y-5">
-          {/* Voice Presets */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Delivery Preset
             </Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {VOICES.map((v) => {
-                const isSelected = selectedVoice === v.id
+              {presets.map((v) => {
+                const isSelected = selectedPreset === v.id
                 return (
                   <button
                     key={v.id}
                     type="button"
-                    onClick={() => setSelectedVoice(v.id)}
+                    onClick={() => {
+                      setSelectedPreset(v.id)
+                      setOverrideVoice("preset")
+                    }}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       isSelected
                         ? "border-blue-600 bg-blue-500/10 shadow-sm"
@@ -118,64 +117,126 @@ export default function AudioStudioPage() {
             </div>
           </div>
 
-          {/* Script Text */}
-          <Card className="border-border/60 bg-card/40">
-            <CardContent className="p-4 space-y-3">
-              <Label className="text-xs font-medium">Voiceover Script</Label>
-              <Textarea
-                value={script}
-                onChange={(e) => setScript(e.target.value)}
-                rows={4}
-                className="text-xs bg-muted/20"
-                placeholder="Enter voice script..."
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Speed</Label>
+              <Select value={rate} onValueChange={setRate}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SPEEDS.map((s) => (
+                    <SelectItem key={s.value} value={s.value} className="text-xs">
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="flex items-center gap-3 pt-2">
-                <Button
-                  onClick={isPlaying ? handleStop : handleSpeak}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs h-9 px-4 gap-2 shadow-md shadow-blue-500/20"
-                >
-                  {isPlaying ? (
-                    <><Square className="h-3.5 w-3.5 fill-white" /> Stop Audio</>
-                  ) : (
-                    <><Play className="h-3.5 w-3.5 fill-white" /> Generate &amp; Play Speech</>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">
+                Specific voice{catalogue.length > 0 ? ` (${catalogue.length} free)` : ""}
+              </Label>
+              <Select value={overrideVoice} onValueChange={setOverrideVoice}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <SelectItem value="preset" className="text-xs">
+                    Use preset voice
+                  </SelectItem>
+                  {catalogue.map((v) => (
+                    <SelectItem key={v.voice} value={v.voice} className="text-xs">
+                      {v.voice.replace("Neural", "")} · {v.gender} · {v.locale}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Script
+              </Label>
+              <span className="text-[11px] text-muted-foreground">
+                {wordCount} words · ~{Math.max(1, Math.round((wordCount / 150) * 60))}s read
+              </span>
+            </div>
+            <Textarea
+              value={script}
+              onChange={(e) => setScript(e.target.value)}
+              rows={7}
+              placeholder="Write the voiceover script exactly as it should be read aloud..."
+              className="text-sm resize-none"
+            />
+          </div>
+
+          <Button
+            onClick={handleGenerate}
+            disabled={isLoading || !script.trim()}
+            className="w-full h-12 text-base bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25 font-semibold"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Synthesizing...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-5 w-5" /> Generate Voiceover
+              </>
+            )}
+          </Button>
         </div>
 
-        {/* Audio Visualizer Card (5 cols) */}
+        {/* Output */}
         <div className="md:col-span-5">
-          <Card className="h-full flex flex-col border-border/60 bg-card/40 overflow-hidden">
-            <CardHeader className="p-4 pb-2 border-b border-border/40">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <Waves className="h-4 w-4 text-blue-400" />
-                Voice Signature &amp; Waveform
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 flex-1 flex flex-col items-center justify-center space-y-4">
-              <div className="w-full h-28 rounded-xl bg-black/60 border border-border/60 flex items-center justify-center gap-1.5 px-4">
-                {Array.from({ length: 24 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`w-1.5 rounded-full bg-blue-500 transition-all duration-150 ${
-                      isPlaying
-                        ? "animate-pulse"
-                        : "h-3 bg-blue-500/30"
-                    }`}
-                    style={{
-                      height: isPlaying ? `${Math.max(12, ((i * 17) % 65) + 10)}px` : "12px",
-                      animationDelay: `${(i % 5) * 0.1}s`,
-                    }}
-                  />
-                ))}
-              </div>
+          <Card className="border-border/60 bg-card/40 h-full">
+            <CardContent className="p-5 flex flex-col items-center justify-center h-full min-h-[300px] space-y-4">
+              {result ? (
+                <div className="w-full space-y-4">
+                  <div className="flex items-center justify-center h-20 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                    <Volume2 className="h-8 w-8 text-blue-400" />
+                  </div>
 
-              <p className="text-xs text-muted-foreground text-center">
-                {isPlaying ? "Voice binding audio actively synthesizing..." : "Client-side neural speech ready"}
-              </p>
+                  <audio
+                    src={`${BACKEND_URL}${result.audio_url}`}
+                    controls
+                    autoPlay
+                    className="w-full"
+                  />
+
+                  <div className="flex items-center justify-center gap-3 text-[11px] text-muted-foreground">
+                    {result.duration_seconds != null && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {result.duration_seconds.toFixed(1)}s
+                      </span>
+                    )}
+                    <span className="font-mono">{result.engine_used}</span>
+                  </div>
+
+                  <Button asChild variant="outline" size="sm" className="w-full text-xs">
+                    <a href={`${BACKEND_URL}${result.audio_url}`} download target="_blank" rel="noreferrer">
+                      <Download className="mr-1.5 h-3.5 w-3.5" /> Download MP3
+                    </a>
+                  </Button>
+
+                  <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+                    To put this on a clip, generate a video in Video Studio and use{" "}
+                    <span className="text-foreground font-medium">Add voiceover</span>.
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center space-y-2">
+                  <Mic className="h-10 w-10 text-muted-foreground/40 mx-auto" />
+                  <p className="text-sm text-muted-foreground">No voiceover yet</p>
+                  <p className="text-xs text-muted-foreground/70 max-w-[220px] mx-auto">
+                    Pick a delivery preset, write your script, and generate a downloadable MP3.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

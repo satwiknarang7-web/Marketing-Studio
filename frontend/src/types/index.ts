@@ -24,6 +24,21 @@ export interface GenerateVideoParams {
   camera_movement?: string;
 }
 
+export interface VoiceoverGenerateParams {
+  script: string;
+  preset_id?: string;
+  voice?: string;
+  rate?: string;
+  pitch?: string;
+}
+
+export interface VoiceoverAttachParams {
+  video_url: string;
+  audio_url: string;
+  /** "pad" holds the last video frame so the whole script is heard */
+  fit?: "pad" | "truncate";
+}
+
 export interface PhotoshootGenerateParams {
   mode: string;
   prompt: string;
@@ -65,6 +80,32 @@ export interface PhotoshootGenerateResponse {
   enhanced_prompt: string;
   engine_used: string;
   created_at: string;
+}
+
+export interface VoicePreset {
+  id: string;
+  name: string;
+  tone: string;
+  voice: string;
+}
+
+export interface CatalogueVoice {
+  voice: string;
+  locale: string;
+  gender: string;
+  personalities: string[];
+}
+
+export interface VoiceoverGenerateResponse {
+  audio_url: string;
+  duration_seconds: number | null;
+  voice_used: string;
+  engine_used: string;
+}
+
+export interface VoiceoverAttachResponse {
+  video_url: string;
+  fit: string;
 }
 
 export interface PhotoshootMode {

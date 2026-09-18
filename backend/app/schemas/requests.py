@@ -58,6 +58,28 @@ class PhotoshootGenerateResponse(BaseModel):
     engine_used: str
     created_at: datetime
 
+class VoiceoverGenerateRequest(BaseModel):
+    script: str
+    preset_id: str = "brand_friendly"
+    voice: Optional[str] = None   # edge-tts ShortName, overrides the preset
+    rate: Optional[str] = None    # e.g. "+10%"
+    pitch: Optional[str] = None   # e.g. "-2Hz"
+
+class VoiceoverGenerateResponse(BaseModel):
+    audio_url: str
+    duration_seconds: Optional[float] = None
+    voice_used: str
+    engine_used: str
+
+class VoiceoverAttachRequest(BaseModel):
+    video_url: str
+    audio_url: str
+    fit: str = "pad"  # 'pad' holds the last frame, 'truncate' cuts at the shorter track
+
+class VoiceoverAttachResponse(BaseModel):
+    video_url: str
+    fit: str
+
 class HistoryItem(BaseModel):
     id: str
     type: str
