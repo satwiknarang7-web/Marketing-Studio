@@ -9,6 +9,9 @@ import type {
   VoiceoverAttachResponse,
   VoicePreset,
   StudioAsset,
+  StudioClip,
+  VideoStitchParams,
+  VideoStitchResponse,
   CatalogueVoice,
   PhotoshootGenerateResponse,
   PhotoshootMode,
@@ -96,6 +99,15 @@ export const api = {
     }
     return response.json()
   },
+
+  getClips: (limit = 60) =>
+    fetchApi<StudioClip[]>(`/assets/videos?limit=${limit}`, { method: "GET" }),
+
+  stitchVideos: (params: VideoStitchParams) =>
+    fetchApi<VideoStitchResponse>("/video/stitch", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
 
   // Voiceover
   getVoicePresets: () => fetchApi<VoicePreset[]>("/audio/presets", { method: "GET" }),

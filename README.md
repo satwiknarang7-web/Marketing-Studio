@@ -8,6 +8,7 @@ A 100% free, open-source generative AI marketing and creative studio built with 
 
 - **Explore & Model Showcase** — Top widescreen showcase carousel with looping video previews, quick model launcher, and real-time status indicators.
 - **Product Photoshoot Studio (`/product-photoshoot`)** — 10 commercial advertising photoshoot modes based on `higgsfield-ai/skills` with product reference image upload and dual-engine backend (`@higgsfield/cli` + FLUX.1 hybrid fallback).
+- **Stitch (`/stitch`)** — Build a timeline from generated clips and join them into one longer video with hard cuts or crossfades, then narrate the whole cut.
 - **Video Studio (`/video-studio`)** — Director camera controls (Pan, Tilt, Zoom, Orbit 360°, Crane, FPV Drone, Static) that drive the rendered camera path, optical focal lengths (24mm, 35mm, 50mm, 85mm), aspect ratios (16:9, 9:16, 1:1, 4:5), and looping video feed.
 - **Cinema Studio (`/cinema`)** — Virtual camera bodies (ARRI Alexa 35, RED V-Raptor, Sony Venice 2), cinema lenses, f-stop depth of field, and stacked dynamic motion paths.
 - **Higgsfield Genjutsu (`/genjutsu`)** — Video-to-Video metamorphosis, camera reframe, world morph, and cinematic style transfer.

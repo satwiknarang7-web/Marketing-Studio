@@ -34,6 +34,7 @@ export function HiggsfieldNavbar() {
     { label: "ChatGPT Plugin", href: "/chatgpt-plugin", badge: "Free", badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
     { label: "Genjutsu", href: "/genjutsu", badge: "New", badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
     { label: "Cinema", href: "/cinema", badge: null },
+    { label: "Stitch", href: "/stitch", badge: "New", badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
     { label: "Templates", href: "/templates", badge: "New", badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
     { label: "Marketing", href: "/product-photoshoot", badge: "10 Modes", badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
   ]

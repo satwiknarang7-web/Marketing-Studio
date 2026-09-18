@@ -118,6 +118,34 @@ export interface StudioAsset {
   created_at: string;
 }
 
+export interface StudioClip {
+  url: string;
+  filename: string;
+  source: string;
+  bytes: number;
+  created_at: string;
+  duration_seconds: number | null;
+  width: number | null;
+  height: number | null;
+  has_audio: boolean;
+}
+
+export interface VideoStitchParams {
+  video_urls: string[];
+  transition?: "cut" | "crossfade";
+  transition_duration?: number;
+}
+
+export interface VideoStitchResponse {
+  video_url: string;
+  duration_seconds: number | null;
+  width: number | null;
+  height: number | null;
+  clip_count: number;
+  has_audio: boolean;
+  source_duration: number;
+}
+
 export interface PhotoshootMode {
   id: string;
   name: string;

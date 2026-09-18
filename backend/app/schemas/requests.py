@@ -58,6 +58,20 @@ class PhotoshootGenerateResponse(BaseModel):
     engine_used: str
     created_at: datetime
 
+class VideoStitchRequest(BaseModel):
+    video_urls: List[str]
+    transition: str = "cut"  # 'cut' or 'crossfade'
+    transition_duration: float = 0.5
+
+class VideoStitchResponse(BaseModel):
+    video_url: str
+    duration_seconds: Optional[float] = None
+    width: Optional[int] = None
+    height: Optional[int] = None
+    clip_count: int
+    has_audio: bool
+    source_duration: float
+
 class VoiceoverGenerateRequest(BaseModel):
     script: str
     preset_id: str = "brand_friendly"

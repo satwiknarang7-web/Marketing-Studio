@@ -19,6 +19,8 @@ IMAGE_DIR = os.path.join("data", "images")
 UPLOAD_DIR = os.path.join("data", "uploads")
 
 ALLOWED_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
+VIDEO_EXTS = {".mp4", ".webm", ".mov"}
+VIDEO_DIR = os.path.join("data", "videos")
 MAX_UPLOAD_BYTES = 12 * 1024 * 1024
 
 # Intermediate frames written by the video pipeline; not user-facing assets.
@@ -37,7 +39,7 @@ def _dimensions(path: str) -> tuple[int | None, int | None]:
         return None, None
 
 
-def _collect(directory: str, url_prefix: str, source: str) -> list[dict]:
+def _collect(directory: str, url_prefix: str, source: str, exts: set[str] | None = None) -> list[dict]:
     if not os.path.isdir(directory):
         return []
 
@@ -45,7 +47,7 @@ def _collect(directory: str, url_prefix: str, source: str) -> list[dict]:
     for name in os.listdir(directory):
         if name.startswith(TEMP_PREFIX):
             continue
-        if os.path.splitext(name)[1].lower() not in ALLOWED_EXTS:
+        if os.path.splitext(name)[1].lower() not in (exts or ALLOWED_EXTS):
             continue
         path = os.path.join(directory, name)
         if not os.path.isfile(path):
@@ -77,6 +79,24 @@ async def list_images(limit: int = Query(60, ge=1, le=300)):
     )
     items.sort(key=lambda i: i["created_at"], reverse=True)
     return items[:limit]
+
+
+@router.get("/videos")
+async def list_videos(limit: int = Query(60, ge=1, le=300)):
+    """Generated clips available to join together, newest first."""
+    from app.services.video_edit_service import probe
+
+    items = _collect(VIDEO_DIR, "/data/videos", "generated", VIDEO_EXTS)
+    items.sort(key=lambda i: i["created_at"], reverse=True)
+    items = items[:limit]
+
+    for item in items:
+        info = probe(os.path.join(VIDEO_DIR, item["filename"]))
+        item["duration_seconds"] = info["duration"]
+        item["width"] = info["width"]
+        item["height"] = info["height"]
+        item["has_audio"] = info["has_audio"]
+    return items
 
 
 @router.post("/upload")

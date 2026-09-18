@@ -2,8 +2,14 @@ import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.database import get_db, Generation
-from app.schemas.requests import VideoGenerateRequest, VideoGenerateResponse
+from app.schemas.requests import (
+    VideoGenerateRequest,
+    VideoGenerateResponse,
+    VideoStitchRequest,
+    VideoStitchResponse,
+)
 from app.services.video_service import generate_video
+from app.services.video_edit_service import stitch_clips
 from app.config import settings
 import uuid
 
@@ -48,5 +54,31 @@ async def generate_video_endpoint(req: VideoGenerateRequest, db: AsyncSession = 
             engine_used=engine_used,
             created_at=gen.created_at
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/stitch", response_model=VideoStitchResponse)
+async def stitch_video_endpoint(req: VideoStitchRequest, db: AsyncSession = Depends(get_db)):
+    """Join generated clips into one longer video."""
+    try:
+        result = await stitch_clips(
+            req.video_urls, req.transition, req.transition_duration
+        )
+
+        gen = Generation(
+            id=str(uuid.uuid4()),
+            type="video",
+            prompt=f"Joined {result['clip_count']} clips ({req.transition})",
+            result=json.dumps({"video_url": result["video_url"], "engine_used": "stitch"}),
+            model_used=f"ffmpeg stitch ({req.transition})",
+            duration=int(result["duration_seconds"] or 0),
+        )
+        db.add(gen)
+        await db.commit()
+
+        return VideoStitchResponse(**result)
+    except (ValueError, FileNotFoundError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
