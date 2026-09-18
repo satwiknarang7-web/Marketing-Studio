@@ -26,6 +26,7 @@ async def lifespan(app: FastAPI):
     os.makedirs("data/videos", exist_ok=True)
     os.makedirs("data/audio", exist_ok=True)
     os.makedirs("data/uploads", exist_ok=True)
+    os.makedirs("data/music", exist_ok=True)
     
     yield
     # Shutdown

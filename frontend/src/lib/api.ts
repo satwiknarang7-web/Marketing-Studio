@@ -10,6 +10,9 @@ import type {
   VoicePreset,
   StudioAsset,
   StudioClip,
+  MusicTrack,
+  MusicBedParams,
+  MusicBedResponse,
   VideoStitchParams,
   VideoStitchResponse,
   CatalogueVoice,
@@ -69,7 +72,7 @@ export const api = {
       body: JSON.stringify(params),
     }),
 
-  // Higgsfield Product Photoshoot
+  // Segue IT Product Photoshoot
   getPhotoshootModes: () =>
     fetchApi<PhotoshootMode[]>("/photoshoot/modes", { method: "GET" }),
 
@@ -105,6 +108,31 @@ export const api = {
 
   stitchVideos: (params: VideoStitchParams) =>
     fetchApi<VideoStitchResponse>("/video/stitch", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+
+  // Music beds
+  getMusic: () => fetchApi<MusicTrack[]>("/assets/music", { method: "GET" }),
+
+  uploadMusic: async (file: File): Promise<MusicTrack> => {
+    const form = new FormData()
+    form.append("file", file)
+    const response = await fetch(`${API_BASE}/assets/upload-music`, { method: "POST", body: form })
+    if (!response.ok) {
+      let message = "Upload failed"
+      try {
+        message = (await response.json()).detail || message
+      } catch {
+        message = `HTTP ${response.status}: ${response.statusText}`
+      }
+      throw new Error(message)
+    }
+    return response.json()
+  },
+
+  addMusicBed: (params: MusicBedParams) =>
+    fetchApi<MusicBedResponse>("/audio/music-bed", {
       method: "POST",
       body: JSON.stringify(params),
     }),

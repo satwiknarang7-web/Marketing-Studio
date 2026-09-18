@@ -58,6 +58,19 @@ class PhotoshootGenerateResponse(BaseModel):
     engine_used: str
     created_at: datetime
 
+class MusicBedRequest(BaseModel):
+    video_url: str
+    music_url: str
+    gain: Optional[float] = None  # 0-1.5; defaults by whether narration is present
+    duck: bool = True             # dip the music while someone is speaking
+
+class MusicBedResponse(BaseModel):
+    video_url: str
+    duration_seconds: Optional[float] = None
+    music_gain: float
+    ducked: bool
+    had_narration: bool
+
 class VideoStitchRequest(BaseModel):
     video_urls: List[str]
     transition: str = "cut"  # 'cut' or 'crossfade'

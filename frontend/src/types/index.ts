@@ -130,6 +130,30 @@ export interface StudioClip {
   has_audio: boolean;
 }
 
+export interface MusicTrack {
+  url: string;
+  filename: string;
+  source: string;
+  bytes: number;
+  created_at: string;
+  duration_seconds: number | null;
+}
+
+export interface MusicBedParams {
+  video_url: string;
+  music_url: string;
+  gain?: number;
+  duck?: boolean;
+}
+
+export interface MusicBedResponse {
+  video_url: string;
+  duration_seconds: number | null;
+  music_gain: number;
+  ducked: boolean;
+  had_narration: boolean;
+}
+
 export interface VideoStitchParams {
   video_urls: string[];
   transition?: "cut" | "crossfade";

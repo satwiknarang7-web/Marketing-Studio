@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { api, BACKEND_URL } from "@/lib/api"
 import { toast } from "sonner"
+import { MusicBed } from "@/components/studio/MusicBed"
 import type { StudioClip, VideoStitchResponse } from "@/types"
 
 /** A clip placed on the timeline. Keyed separately so one clip can repeat. */
@@ -321,7 +322,14 @@ export default function StitchPage() {
                 </a>
               </Button>
 
-              <div className="pt-2 border-t border-border/40 space-y-2">
+              <div className="pt-3 border-t border-border/40">
+                <MusicBed
+                  videoUrl={voicedUrl ?? result.video_url}
+                  onMixed={(url) => setVoicedUrl(url)}
+                />
+              </div>
+
+              <div className="pt-3 border-t border-border/40 space-y-2">
                 <div className="flex items-center gap-2">
                   <Mic className="h-3.5 w-3.5 text-blue-400" />
                   <Label className="text-xs font-semibold">Add voiceover to the full cut</Label>

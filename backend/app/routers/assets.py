@@ -21,6 +21,9 @@ UPLOAD_DIR = os.path.join("data", "uploads")
 ALLOWED_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
 VIDEO_EXTS = {".mp4", ".webm", ".mov"}
 VIDEO_DIR = os.path.join("data", "videos")
+MUSIC_EXTS = {".mp3", ".wav", ".m4a", ".ogg", ".flac"}
+MUSIC_DIR = os.path.join("data", "music")
+MAX_MUSIC_BYTES = 30 * 1024 * 1024
 MAX_UPLOAD_BYTES = 12 * 1024 * 1024
 
 # Intermediate frames written by the video pipeline; not user-facing assets.
@@ -97,6 +100,68 @@ async def list_videos(limit: int = Query(60, ge=1, le=300)):
         item["height"] = info["height"]
         item["has_audio"] = info["has_audio"]
     return items
+
+
+@router.get("/music")
+async def list_music(limit: int = Query(60, ge=1, le=300)):
+    """Music beds available to lay under a video."""
+    from app.services.video_edit_service import probe
+
+    items = _collect(MUSIC_DIR, "/data/music", "upload", MUSIC_EXTS)
+    items.sort(key=lambda i: i["created_at"], reverse=True)
+    items = items[:limit]
+    for item in items:
+        info = probe(os.path.join(MUSIC_DIR, item["filename"]))
+        item["duration_seconds"] = info["duration"]
+    return items
+
+
+@router.post("/upload-music")
+async def upload_music(file: UploadFile = File(...)):
+    """Bring in a music track. Use anything you are licensed to use."""
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in MUSIC_EXTS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported audio type '{ext or 'unknown'}'. "
+            "Use MP3, WAV, M4A, OGG or FLAC.",
+        )
+
+    contents = await file.read()
+    if not contents:
+        raise HTTPException(status_code=400, detail="The file is empty.")
+    if len(contents) > MAX_MUSIC_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File is {len(contents) // 1024 // 1024}MB; the limit is "
+            f"{MAX_MUSIC_BYTES // 1024 // 1024}MB.",
+        )
+
+    os.makedirs(MUSIC_DIR, exist_ok=True)
+    name = f"{uuid.uuid4()}{ext}"
+    path = os.path.join(MUSIC_DIR, name)
+    with open(path, "wb") as f:
+        f.write(contents)
+
+    # Confirm it is really decodable audio rather than trusting the extension.
+    from app.services.video_edit_service import probe
+
+    info = probe(path)
+    if not info["duration"]:
+        os.remove(path)
+        raise HTTPException(status_code=400, detail="That file is not readable audio.")
+
+    stat = os.stat(path)
+    return {
+        "url": f"/data/music/{name}",
+        "filename": name,
+        "source": "upload",
+        "bytes": stat.st_size,
+        "duration_seconds": info["duration"],
+        "width": None,
+        "height": None,
+        "created_at": datetime.now(tz=timezone.utc).isoformat(),
+    }
 
 
 @router.post("/upload")

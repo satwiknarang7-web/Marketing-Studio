@@ -1,10 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from app.schemas.requests import (
+    MusicBedRequest,
+    MusicBedResponse,
     VoiceoverGenerateRequest,
     VoiceoverGenerateResponse,
     VoiceoverAttachRequest,
     VoiceoverAttachResponse,
 )
+from app.services.music_service import add_music_bed
 from app.services.audio_service import (
     VOICE_PRESETS,
     synthesize_speech,
@@ -67,3 +70,15 @@ async def attach_voiceover_endpoint(req: VoiceoverAttachRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not attach voiceover: {e}")
+
+
+@router.post("/music-bed", response_model=MusicBedResponse)
+async def add_music_bed_endpoint(req: MusicBedRequest):
+    """Lay a looping music bed under a clip, ducked beneath any narration."""
+    try:
+        result = await add_music_bed(req.video_url, req.music_url, req.gain, req.duck)
+        return MusicBedResponse(**result)
+    except (ValueError, FileNotFoundError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not add music: {e}")

@@ -74,6 +74,7 @@ intermittently returns an empty stream.
 | **Image Engine** | Black Forest Labs FLUX.1-schnell |
 | **Text Engine** | Qwen 2.5 7B Instruct |
 | **Voice Engine** | edge-tts (Microsoft neural voices, 322 voices, free) |
+| **Editing** | ffmpeg via `imageio-ffmpeg` (stitching, voiceover mux, music beds) |
 
 ---
 
