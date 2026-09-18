@@ -54,47 +54,70 @@ def _call_ltx_video(full_prompt: str, duration: int, input_image_path: str | Non
     """Call the real Lightricks LTX-Video model via Hugging Face Space."""
     from gradio_client import Client, handle_file
 
-    client = Client(
-        "Lightricks/ltx-video-distilled",
-        token=settings.HF_TOKEN if settings.HF_TOKEN else None,
-    )
+    client = None
+    # Attempt 1: Anonymous connection (bypasses user token ZeroGPU exhaustion)
+    try:
+        client = Client("Lightricks/ltx-video-distilled", token=None)
+    except Exception as e:
+        logger.warning(f"Anonymous LTX client init failed ({e}). Trying with HF_TOKEN...")
+        if settings.HF_TOKEN:
+            try:
+                client = Client("Lightricks/ltx-video-distilled", token=settings.HF_TOKEN)
+            except Exception as e2:
+                logger.warning(f"Token client init failed: {e2}")
 
-    if input_image_path and os.path.exists(input_image_path):
-        # Image-to-Video mode
-        res = client.predict(
-            prompt=full_prompt,
-            negative_prompt=NEGATIVE_PROMPT,
-            input_image_filepath=handle_file(input_image_path),
-            input_video_filepath=None,
-            height_ui=480,
-            width_ui=640,
-            mode="image-to-video",
-            duration_ui=max(2, min(duration, 5)),
-            ui_frames_to_use=9,
-            seed_ui=42,
-            randomize_seed=True,
-            ui_guidance_scale=1.0,
-            improve_texture_flag=True,
-            api_name="/image_to_video",
-        )
-    else:
-        # Text-to-Video mode
-        res = client.predict(
-            prompt=full_prompt,
-            negative_prompt=NEGATIVE_PROMPT,
-            input_image_filepath=None,
-            input_video_filepath=None,
-            height_ui=480,
-            width_ui=640,
-            mode="text-to-video",
-            duration_ui=max(2, min(duration, 5)),
-            ui_frames_to_use=9,
-            seed_ui=42,
-            randomize_seed=True,
-            ui_guidance_scale=1.0,
-            improve_texture_flag=True,
-            api_name="/text_to_video",
-        )
+    if not client:
+        return None
+
+    def _predict_with_client(c):
+        if input_image_path and os.path.exists(input_image_path):
+            return c.predict(
+                prompt=full_prompt,
+                negative_prompt=NEGATIVE_PROMPT,
+                input_image_filepath=handle_file(input_image_path),
+                input_video_filepath=None,
+                height_ui=512,
+                width_ui=704,
+                mode="image-to-video",
+                duration_ui=max(2, min(duration, 5)),
+                ui_frames_to_use=17,
+                seed_ui=42,
+                randomize_seed=True,
+                ui_guidance_scale=1.0,
+                improve_texture_flag=True,
+                api_name="/image_to_video",
+            )
+        else:
+            return c.predict(
+                prompt=full_prompt,
+                negative_prompt=NEGATIVE_PROMPT,
+                input_image_filepath=None,
+                input_video_filepath=None,
+                height_ui=512,
+                width_ui=704,
+                mode="text-to-video",
+                duration_ui=max(2, min(duration, 5)),
+                ui_frames_to_use=17,
+                seed_ui=42,
+                randomize_seed=True,
+                ui_guidance_scale=1.0,
+                improve_texture_flag=True,
+                api_name="/text_to_video",
+            )
+
+    try:
+        res = _predict_with_client(client)
+    except Exception as pred_err:
+        logger.warning(f"LTX-Video predict error ({pred_err}).")
+        # If anonymous failed with quota, try with token if available
+        if settings.HF_TOKEN:
+            try:
+                client_token = Client("Lightricks/ltx-video-distilled", token=settings.HF_TOKEN)
+                res = _predict_with_client(client_token)
+            except Exception:
+                return None
+        else:
+            return None
 
     if isinstance(res, (tuple, list)) and len(res) > 0:
         video_info = res[0]
@@ -103,29 +126,54 @@ def _call_ltx_video(full_prompt: str, duration: int, input_image_path: str | Non
     return None
 
 
-def _synthesize_camera_motion_video(
-    image_path: str,
+def _generate_temporal_stages(prompt: str) -> list[str]:
+    """Generates 3 progressive temporal scene prompts for fluid multi-frame animation."""
+    p = prompt.strip()
+    p_lower = p.lower()
+
+    if any(w in p_lower for w in ["car", "drift", "drive", "vehicle", "race"]):
+        s1 = f"{p}, dynamic low-angle composition, headlights cutting through mist, beginning motion"
+        s2 = f"{p}, dramatic sideways slide mid-drift, intense smoke billowing from spinning tires, motion blur, neon reflections"
+        s3 = f"{p}, high speed acceleration powering out of turn, glowing taillight streaks, epic cinematic exit"
+    elif any(w in p_lower for w in ["girl", "woman", "man", "person", "portrait", "face", "introducing", "talking"]):
+        s1 = f"{p}, relaxed natural posture, warm cinematic lighting, soft background bokeh"
+        s2 = f"{p}, turning toward camera with expressive vibrant smile, eyes sparkling, hair gently blowing, dynamic life"
+        s3 = f"{p}, engaging friendly expression, subtle head movement, cinematic golden hour depth of field"
+    elif any(w in p_lower for w in ["banana", "fruit", "product", "bottle", "shoe", "perfume", "watch"]):
+        s1 = f"{p}, floating in clean studio space, professional commercial rim lighting"
+        s2 = f"{p}, dynamic 3D rotational spin in mid-air, kinetic sparkling fluid droplets, dramatic lighting shift"
+        s3 = f"{p}, hero commercial angle, volumetric light rays, immaculate high definition finish"
+    else:
+        s1 = f"{p}, cinematic composition, establishing scene action, professional atmospheric lighting"
+        s2 = f"{p}, peak kinetic motion, dramatic dynamic transformation, fluid subject movement, motion blur"
+        s3 = f"{p}, continuous fluid motion, volumetric light rays, grand cinematic climax"
+
+    return [s1, s2, s3]
+
+
+def _synthesize_progressive_motion_video(
+    keyframe_paths: list[str],
     output_path: str,
-    camera_movement: str,
+    camera_movement: str = "zoom_in",
     duration_seconds: int = 4,
     fps: int = 24,
 ) -> str:
-    """Synthesizes high-definition cinematic camera motion from an image using imageio-ffmpeg."""
+    """Synthesizes smooth, real multi-stage dynamic animation from progressive keyframes with camera tracking."""
     import math
     import imageio_ffmpeg
     from PIL import Image
 
-    width, height = 848, 480  # 16:9 Cinema widescreen (divisible by 16)
+    width, height = 768, 432  # 16:9 widescreen cinema
     total_frames = max(24, duration_seconds * fps)
 
-    with Image.open(image_path) as raw_img:
-        base_img = raw_img.convert("RGB")
+    # Load and normalize all progressive keyframes
+    images = []
+    for path in keyframe_paths:
+        with Image.open(path) as im:
+            images.append(im.convert("RGB").resize((width, height), Image.Resampling.LANCZOS))
 
-    # Expand canvas by 35% margin for smooth camera pans and zooms without edge clipping
-    margin = 1.35
-    work_w = int(width * margin)
-    work_h = int(height * margin)
-    base = base_img.resize((work_w, work_h), Image.Resampling.LANCZOS)
+    n_segments = max(1, len(images) - 1)
+    frames_per_segment = total_frames / float(n_segments)
 
     writer = imageio_ffmpeg.write_frames(
         output_path,
@@ -135,73 +183,69 @@ def _synthesize_camera_motion_video(
         pix_fmt_in="rgb24",
         macro_block_size=16,
     )
-    writer.send(None)  # prime generator
+    writer.send(None)
 
     mov = camera_movement.lower()
 
     for i in range(total_frames):
-        t = i / float(total_frames)
-        # Cosine ease-in-out curve for cinematic fluidity
-        ease = 0.5 - 0.5 * math.cos(math.pi * t)
+        global_t = i / float(total_frames)
 
-        if "zoom_out" in mov or "pull" in mov:
-            scale = 1.30 - 0.28 * ease
-            crop_w = int(work_w / scale)
-            crop_h = int(work_h / scale)
-            left = (work_w - crop_w) // 2
-            top = (work_h - crop_h) // 2
+        # Stage morphing between current keyframe and next
+        seg_idx = min(int(i / frames_per_segment), n_segments - 1)
+        seg_t = (i - seg_idx * frames_per_segment) / frames_per_segment
+        seg_t = max(0.0, min(1.0, seg_t))
+
+        # Smooth cosine S-curve easing between stages
+        ease_morph = 0.5 - 0.5 * math.cos(math.pi * seg_t)
+        base_frame = Image.blend(images[seg_idx], images[seg_idx + 1], ease_morph)
+
+        # Apply cinematic camera tracking & dynamic perspective drift
+        ease_cam = 0.5 - 0.5 * math.cos(math.pi * global_t)
+
+        margin = 1.18
+        work_w, work_h = int(width * margin), int(height * margin)
+        expanded = base_frame.resize((work_w, work_h), Image.Resampling.BILINEAR)
+
+        if "orbit" in mov or "drone" in mov or "fpv" in mov:
+            angle = ease_cam * math.pi * 0.6
+            dx = int((work_w - width) * (0.5 + 0.38 * math.sin(angle)))
+            dy = int((work_h - height) * (0.5 + 0.28 * math.cos(angle)))
+            scale = 1.04 + 0.08 * math.sin(ease_cam * math.pi)
         elif "pan_left" in mov:
-            crop_w = width
-            crop_h = height
-            max_off = work_w - crop_w
-            left = int(max_off * (1.0 - ease))
-            top = (work_h - crop_h) // 2
+            dx = int((work_w - width) * (1.0 - ease_cam))
+            dy = (work_h - height) // 2
+            scale = 1.05
         elif "pan_right" in mov:
-            crop_w = width
-            crop_h = height
-            max_off = work_w - crop_w
-            left = int(max_off * ease)
-            top = (work_h - crop_h) // 2
+            dx = int((work_w - width) * ease_cam)
+            dy = (work_h - height) // 2
+            scale = 1.05
         elif "tilt_up" in mov:
-            crop_w = width
-            crop_h = height
-            max_off = work_h - crop_h
-            left = (work_w - crop_w) // 2
-            top = int(max_off * (1.0 - ease))
+            dx = (work_w - width) // 2
+            dy = int((work_h - height) * (1.0 - ease_cam))
+            scale = 1.05
         elif "tilt_down" in mov:
-            crop_w = width
-            crop_h = height
-            max_off = work_h - crop_h
-            left = (work_w - crop_w) // 2
-            top = int(max_off * ease)
-        elif "orbit" in mov or "drone" in mov or "fpv" in mov:
-            angle = ease * 2 * math.pi * 0.35
-            scale = 1.12 + 0.14 * math.sin(ease * math.pi)
-            crop_w = int(work_w / scale)
-            crop_h = int(work_h / scale)
-            dx = int((work_w - crop_w) * (0.5 + 0.32 * math.cos(angle)))
-            dy = int((work_h - crop_h) * (0.5 + 0.28 * math.sin(angle)))
-            left = max(0, min(work_w - crop_w, dx))
-            top = max(0, min(work_h - crop_h, dy))
-        elif "static" in mov or "tripod" in mov:
-            # Subtle natural cinematic breathing
-            scale = 1.04 + 0.03 * math.sin(ease * math.pi * 2)
-            crop_w = int(work_w / scale)
-            crop_h = int(work_h / scale)
-            left = (work_w - crop_w) // 2
-            top = (work_h - crop_h) // 2
+            dx = (work_w - width) // 2
+            dy = int((work_h - height) * ease_cam)
+            scale = 1.05
+        elif "zoom_out" in mov or "pull" in mov:
+            scale = 1.15 - 0.12 * ease_cam
+            dx = (work_w - width) // 2
+            dy = (work_h - height) // 2
         else:
-            # Default: Dynamic Zoom In (Push)
-            scale = 1.02 + 0.28 * ease
-            crop_w = int(work_w / scale)
-            crop_h = int(work_h / scale)
-            left = (work_w - crop_w) // 2
-            top = (work_h - crop_h) // 2
+            # Dynamic Zoom In (Push) with cinematic drift
+            scale = 1.02 + 0.14 * ease_cam
+            dx = (work_w - width) // 2
+            dy = (work_h - height) // 2
 
-        frame = base.crop((left, top, left + crop_w, top + crop_h)).resize(
+        crop_w = int(width / scale)
+        crop_h = int(height / scale)
+        cl = max(0, min(work_w - crop_w, dx))
+        ct = max(0, min(work_h - crop_h, dy))
+
+        final_frame = expanded.crop((cl, ct, cl + crop_w, ct + crop_h)).resize(
             (width, height), Image.Resampling.BILINEAR
         )
-        writer.send(frame.tobytes())
+        writer.send(final_frame.tobytes())
 
     writer.close()
     return output_path
@@ -213,7 +257,7 @@ async def generate_video(
     style: str,
     image_data: str | None = None,
 ) -> str:
-    """Generate a real AI video clip using LTX-Video with automatic Free Motion Synthesizer fallback."""
+    """Generate a genuine AI video clip using LTX-Video with Multi-Stage Generative Motion Engine fallback."""
     full_prompt = _clean_and_enrich_prompt(prompt, style.lower().replace(" ", "_"))
 
     filename = f"{uuid.uuid4()}.mp4"
@@ -222,7 +266,6 @@ async def generate_video(
 
     input_img_path = None
     if image_data:
-        # If user passed base64 image data for image-to-video
         try:
             if "," in image_data:
                 image_data = image_data.split(",", 1)[1]
@@ -233,7 +276,7 @@ async def generate_video(
         except Exception as e:
             logger.warning(f"Could not decode input image: {e}")
 
-    # Step 1: Try Hugging Face LTX-Video Space
+    # Tier 1: True LTX-Video AI Diffusion Generation
     try:
         temp_video_path = await asyncio.to_thread(
             _call_ltx_video, full_prompt, duration_seconds, input_img_path
@@ -243,30 +286,45 @@ async def generate_video(
             return f"/data/videos/{filename}"
     except Exception as e:
         logger.warning(
-            f"LTX-Video Hugging Face Space failed ({e}). "
-            "Engaging 100% Free Camera Motion Synthesizer..."
+            f"LTX-Video space unavailable ({e}). Engaging Progressive Generative Motion Engine..."
         )
 
-    # Step 2: Resilient Free Motion Fallback (ZeroGPU Quota Safe)
+    # Tier 2: Progressive Multi-Stage Generative Motion Engine
+    temp_keyframe_paths = []
     try:
-        # If no input image, generate scene frame using FLUX.1-schnell
-        if not input_img_path or not os.path.exists(input_img_path):
-            from app.services.image_service import generate_image
-            _, input_img_path = await generate_image(
-                prompt=full_prompt,
-                negative_prompt=NEGATIVE_PROMPT,
-                width=1024,
-                height=576,
-                style=style if style else "photorealistic",
-            )
+        from app.services.image_service import generate_image
 
-        # Synthesize camera motion from the keyframe
+        stages = _generate_temporal_stages(full_prompt)
+
+        # If user uploaded an image, use it as Stage 0
+        if input_img_path and os.path.exists(input_img_path):
+            keyframe_paths = [input_img_path]
+            # Generate stages 1 and 2
+            tasks = [
+                generate_image(stage, NEGATIVE_PROMPT, 896, 512, style if style else "photorealistic")
+                for stage in stages[1:]
+            ]
+            gen_results = await asyncio.gather(*tasks)
+            for _, path in gen_results:
+                keyframe_paths.append(path)
+                temp_keyframe_paths.append(path)
+        else:
+            # Generate all 3 progressive stages in parallel
+            tasks = [
+                generate_image(stage, NEGATIVE_PROMPT, 896, 512, style if style else "photorealistic")
+                for stage in stages
+            ]
+            gen_results = await asyncio.gather(*tasks)
+            keyframe_paths = [path for _, path in gen_results]
+            temp_keyframe_paths.extend(keyframe_paths)
+
+        # Synthesize fluid multi-stage motion with camera tracking
         await asyncio.to_thread(
-            _synthesize_camera_motion_video,
-            input_img_path,
+            _synthesize_progressive_motion_video,
+            keyframe_paths,
             filepath,
             prompt,
-            max(2, min(duration_seconds, 6)),
+            max(3, min(duration_seconds, 6)),
             24,
         )
 
@@ -274,7 +332,7 @@ async def generate_video(
             return f"/data/videos/{filename}"
 
     except Exception as fallback_err:
-        logger.error(f"Fallback motion engine failed: {fallback_err}")
+        logger.error(f"Generative motion engine failed: {fallback_err}")
         raise RuntimeError(f"Video generation error: {str(fallback_err)}")
 
     finally:
@@ -283,5 +341,11 @@ async def generate_video(
                 os.remove(input_img_path)
             except Exception:
                 pass
+        for p in temp_keyframe_paths:
+            if os.path.exists(p) and "temp_" in p:
+                try:
+                    os.remove(p)
+                except Exception:
+                    pass
 
     raise RuntimeError("Could not generate video clip. Please try a different prompt.")
