@@ -27,7 +27,7 @@ import { PromptInput } from "@/components/shared/PromptInput"
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay"
 import { ViralityModal } from "@/components/shared/ViralityModal"
 import { VIDEO_STYLES } from "@/lib/constants"
-import { api } from "@/lib/api"
+import { api, BACKEND_URL } from "@/lib/api"
 import { toast } from "sonner"
 import type { VideoGenerateResponse, ViralityScoreResponse } from "@/types"
 
@@ -452,7 +452,7 @@ export default function VideoStudioPage() {
               {result && (
                 <Button
                   size="sm"
-                  onClick={() => handleScoreVirality(`http://localhost:8000${result.video_url}`, prompt || "Commercial Ad")}
+                  onClick={() => handleScoreVirality(`${BACKEND_URL}${result.video_url}`, prompt || "Commercial Ad")}
                   className="bg-blue-600/10 text-blue-400 border border-blue-500/30 hover:bg-blue-600/20 text-xs h-7 gap-1"
                 >
                   <TrendingUp className="h-3.5 w-3.5" /> Score Virality
@@ -465,7 +465,7 @@ export default function VideoStudioPage() {
                 <div className="w-full space-y-3">
                   <div className="rounded-xl overflow-hidden bg-black aspect-video border border-border/80 shadow-lg">
                     <video
-                      src={`http://localhost:8000${result.video_url}`}
+                      src={`${BACKEND_URL}${result.video_url}`}
                       controls
                       autoPlay
                       loop
@@ -474,7 +474,7 @@ export default function VideoStudioPage() {
                   </div>
                   <div className="flex gap-2">
                     <Button asChild variant="outline" size="sm" className="flex-1 text-xs">
-                      <a href={`http://localhost:8000${result.video_url}`} download target="_blank" rel="noreferrer">
+                      <a href={`${BACKEND_URL}${result.video_url}`} download target="_blank" rel="noreferrer">
                         <Download className="mr-1.5 h-3.5 w-3.5" /> Download MP4
                       </a>
                     </Button>

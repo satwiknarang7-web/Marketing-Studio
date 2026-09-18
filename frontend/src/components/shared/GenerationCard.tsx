@@ -14,6 +14,8 @@ interface GenerationCardProps {
   onDelete?: (id: string) => void
 }
 
+import { BACKEND_URL } from "@/lib/api"
+
 /**
  * Extracts a displayable content string from the result JSON.
  * Backend stores different shapes per type:
@@ -37,7 +39,7 @@ function getDisplayContent(item: HistoryItem): string {
   }
   if (item.type === "video") {
     const url = (r as Record<string, unknown>).video_url as string | undefined
-    return url ? `http://localhost:8000${url}` : ""
+    return url ? `${BACKEND_URL}${url}` : ""
   }
   return ""
 }

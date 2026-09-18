@@ -14,7 +14,9 @@ import type {
   BrandKit,
 } from "@/types";
 
-const API_BASE = "http://localhost:8000/api";
+export const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/+$/, "") || "http://localhost:8000";
+export const API_BASE = `${BACKEND_URL}/api`;
 
 async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE}${endpoint}`, {

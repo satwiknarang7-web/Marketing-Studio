@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { PromptInput } from "@/components/shared/PromptInput"
 import { LoadingOverlay } from "@/components/shared/LoadingOverlay"
-import { api } from "@/lib/api"
+import { api, BACKEND_URL } from "@/lib/api"
 import { toast } from "sonner"
 import type { VideoGenerateResponse } from "@/types"
 
@@ -192,7 +192,7 @@ export default function GenjutsuPage() {
                 <div className="w-full space-y-3">
                   <div className="rounded-xl overflow-hidden bg-black aspect-video border border-border/80 shadow-2xl">
                     <video
-                      src={`http://localhost:8000${result.video_url}`}
+                      src={`${BACKEND_URL}${result.video_url}`}
                       controls
                       autoPlay
                       loop
@@ -200,7 +200,7 @@ export default function GenjutsuPage() {
                     />
                   </div>
                   <Button asChild variant="outline" size="sm" className="w-full text-xs">
-                    <a href={`http://localhost:8000${result.video_url}`} download target="_blank" rel="noreferrer">
+                    <a href={`${BACKEND_URL}${result.video_url}`} download target="_blank" rel="noreferrer">
                       <Download className="mr-1.5 h-3.5 w-3.5" /> Download Mutated Video
                     </a>
                   </Button>
